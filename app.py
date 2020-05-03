@@ -10,7 +10,10 @@ sys.path.append("espnet")
 
 # define device
 import torch
-# device = torch.device("cuda")
+cuda_available = torch.cuda.is_available()
+
+if cuda_available:
+    device = torch.device("cuda")
 
 # define E2E-TTS model
 from argparse import Namespace
@@ -21,8 +24,10 @@ idim, odim, train_args = get_model_conf(model_path)
 model_class = dynamic_import(train_args.model_module)
 model = model_class(idim, odim, train_args)
 torch_load(model_path, model)
-# model = model.eval().to(device)
-model = model.eval()
+if cuda_available:
+    model = model.eval().to(device)
+else:
+    model = model.eval()
 inference_args = Namespace(**{"threshold": 0.5, "minlenratio": 0.0, "maxlenratio": 10.0})
 
 # define neural vocoder
@@ -33,8 +38,10 @@ with open(vocoder_conf) as f:
 vocoder = ParallelWaveGANGenerator(**config["generator_params"])
 vocoder.load_state_dict(torch.load(vocoder_path, map_location="cpu")["model"]["generator"])
 vocoder.remove_weight_norm()
-# vocoder = vocoder.eval().to(device)
-vocoder = vocoder.eval()
+if cuda_available:
+    vocoder = vocoder.eval().to(device)
+else:
+    vocoder = vocoder.eval()
 
 # define text frontend
 import pyopenjtalk
@@ -56,8 +63,10 @@ def frontend(text):
         else:
             idseq += [char_to_id[c]]
     idseq += [idim - 1]  # <eos>
-    # return torch.LongTensor(idseq).view(-1).to(device)
-    return torch.LongTensor(idseq).view(-1)
+    if cuda_available:
+        return torch.LongTensor(idseq).view(-1).to(device)
+    else:
+        return torch.LongTensor(idseq).view(-1)
 
 frontend("初回の辞書のインストールが必要です")
 print("Now ready to synthesize!")
@@ -72,8 +81,10 @@ def synthesize(input_text):
         start = time.time()
         x = frontend(input_text)
         c, _, _ = model.inference(x, inference_args)
-        # z = torch.randn(1, 1, c.size(0) * config["hop_size"]).to(device)
-        z = torch.randn(1, 1, c.size(0) * config["hop_size"])
+        if cuda_available:
+            z = torch.randn(1, 1, c.size(0) * config["hop_size"]).to(device)
+        else:
+            z = torch.randn(1, 1, c.size(0) * config["hop_size"])
         c = torch.nn.ReplicationPad1d(config["generator_params"]["aux_context_window"])(c.unsqueeze(0).transpose(2, 1))
         y = vocoder(z, c).view(-1)
     rtf = (time.time() - start) / (len(y) / config["sampling_rate"])
