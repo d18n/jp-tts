@@ -11,9 +11,9 @@ This runs using pre-trained models from espnet, and I would like to add support 
 
 To get this up and running locally, you can pull the image from dockerhub:
 
-`docker pull dkkempto/jp-tts`
+`docker pull d18n/jp-tts`
 
-`docker run -it -p 1337:1337 dkkempto/jp-tts`
+`docker run -it -p 1337:1337 d18n/jp-tts`
 
 Or, you can build the image locally
 
