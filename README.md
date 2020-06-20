@@ -25,7 +25,7 @@ Or, if you have a gpu and have nvidia-docker installed/configured on your system
 
 You can test that it's working by making a request to:
 
-`http://localhost:1337?q=これはテストです`
+`http://localhost:1337synthesize?q=これはテストです`
 
 P.S. This is the first time I've pushed anything to Dockerhub, and really the first project I've done with docker in general 
 so if you have any suggestions, feel free to make an issue!
